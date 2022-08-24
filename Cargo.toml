@@ -23,4 +23,5 @@ config = "0.11.0"
 derive_more = "0.99.17"
 dotenv = "0.15.0"
 dotenv_codegen = "0.15.0"
-postgres = "0.19.4"
+rusqlite = { version = "0.28.0", features = ["bundled", "uuid" ] }
+email_address = "0.2.3"
