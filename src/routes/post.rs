@@ -107,7 +107,6 @@ pub async fn login(info: web::Json<UserInput>) -> Result<HttpResponse, Error> {
                 let user_permissions = vec!["OP_GET_SECURED_INFO".to_string(), "ROLE_USER".to_string()];
                 let start = Instant::now();
 
-
                 let claims = Claims::new(
                     &user_from_db.guid,
                     &user_info.email,
