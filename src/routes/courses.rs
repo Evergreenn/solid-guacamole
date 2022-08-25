@@ -1,19 +1,8 @@
-use crate::claim::decode_jwt;
-use crate::claim::*;
 use crate::repositories::courses_repository;
-use crate::security::password_manager::*;
-use actix_web::{error, get, post, web, Error, HttpResponse, Responder, Result};
-// use actix_web_httpauth::extractors::bearer::BearerAuth;
-use chrono::{Duration, Utc, NaiveDateTime, DateTime};
-use derive_more::Error;
-use email_address::*;
+use actix_web::{get, post, web, Error, HttpResponse};
 use serde::{Deserialize, Serialize};
 use std::time::Instant;
 
-// #[derive(Serialize, Deserialize, Debug)]
-// struct CoursesRespond {
-//     pub courses: Vec<courses_repository::Course>
-// }
 #[derive(Debug, Serialize, Deserialize)]
 
 pub struct CourseFromClient {
@@ -25,11 +14,16 @@ pub struct CourseFromClient {
     pub comments: String,
 }
 
+#[derive(Deserialize)]
+pub struct Query {
+    page: u16,
+}
+
 #[get("/courses")]
-pub async fn get_courses() -> Result<HttpResponse, Error> {
+pub async fn get_courses(pagination: web::Query<Query>) -> Result<HttpResponse, Error> {
     let start = Instant::now();
 
-    let courses = courses_repository::get_courses();
+    let courses = courses_repository::get_courses(pagination.page);
     let duration = start.elapsed();
     dbg!("Time elapsed in get_courses is: {:?}", duration);
 

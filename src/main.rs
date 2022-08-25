@@ -1,6 +1,5 @@
 #[macro_use]
 extern crate dotenv_codegen;
-
 extern crate derive_more;
 
 use actix_cors::Cors;
@@ -58,13 +57,12 @@ async fn main() -> std::io::Result<()> {
                 web::scope("/api")
                     .wrap(auth)
                     .service(crate::routes::courses::get_courses)
-                    .service(crate::routes::courses::add_course),
+                    .service(crate::routes::courses::add_course)
             )
     })
     .bind(dotenv!("API_URL"))?
     .workers(1)
     .run();
-    dbg!("server booted");
     println!("Server running at http://{}/", dotenv!("API_URL"));
 
     server.await
