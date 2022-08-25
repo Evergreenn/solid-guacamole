@@ -4,6 +4,8 @@ use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use uuid::Uuid;
+use std::time::{SystemTime, UNIX_EPOCH};
+
 
 const DB_PATH: &str = dotenv!("DATABASE_PATH");
 
@@ -49,11 +51,16 @@ pub fn get_courses(mut page: u16) -> Vec<Course> {
 
     let offset = (page -1) * 5u16;
     let limit = 5u16;
+    let start = SystemTime::now();
+    let since_the_epoch = start
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards");
+    let now_in_timestamp = since_the_epoch.as_secs();
 
-    let mut stmt = conn.prepare("SELECT * FROM courses LIMIT ?1 OFFSET ?2").unwrap();
+    let mut stmt = conn.prepare("SELECT * FROM courses WHERE schedule_date > ?1 LIMIT ?2 OFFSET ?3").unwrap();
 
     let course_iter = stmt
-        .query_map([limit, offset], |row| {
+        .query_map(params![now_in_timestamp, limit, offset], |row| {
             Ok(Course {
                 guid: row.get(0).unwrap(),
                 prof: row.get(1).unwrap(),
