@@ -36,9 +36,9 @@ pub fn init() {
     .unwrap();
 
     conn.execute(
-        "CREATE TABLE IF NOT EXISTS courses (
+        "CREATE TABLE IF NOT EXISTS courses_students (
              guid text primary key,
-             id_studient text,
+             id_student text,
              id_course text
          );",
         [],

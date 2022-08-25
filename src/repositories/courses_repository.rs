@@ -6,7 +6,6 @@ use std::fmt::Display;
 use uuid::Uuid;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-
 const DB_PATH: &str = dotenv!("DATABASE_PATH");
 
 #[derive(Debug, PartialEq, Eq, derive_more::Error, Serialize, Deserialize)]
@@ -79,6 +78,10 @@ pub fn get_courses(mut page: u16) -> Vec<Course> {
         .map(|x| x.unwrap())
         .collect::<Vec<Course>>()
 }
+
+// pub fn get_user_subscribbed(course_id: &str) -> Vec<User> {
+
+// }
 
 pub fn insert_course(course: courses::CourseFromClient) -> i64 {
     let conn = connect();

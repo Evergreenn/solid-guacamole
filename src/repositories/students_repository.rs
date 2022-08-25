@@ -1,4 +1,4 @@
-use rusqlite::{Connection};
+use rusqlite::Connection;
 use uuid::Uuid;
 
 const DB_PATH: &str = dotenv!("DATABASE_PATH");
@@ -51,32 +51,44 @@ pub fn is_user_exists(email: &str) -> bool {
     }
 }
 
-
-
 // pub fn update_user() -> bool {}
 
 pub fn get_user(username: &str) -> Vec<User> {
-
     let conn = connect();
 
+    let mut stmt = conn
+        .prepare("SELECT guid, email, password FROM students WHERE email = ?1")
+        .unwrap();
 
-    let mut stmt = conn.prepare(
-        "SELECT guid, email, password FROM students WHERE email = ?1",
-    ).unwrap();
-
-    let users = stmt.query_map(&[username], |row| 
-        Ok(User{
-            guid: row.get(0)?,
-            email: row.get(1)?,
-            password: row.get(2)?,
+    let users = stmt
+        .query_map(&[username], |row| {
+            Ok(User {
+                guid: row.get(0)?,
+                email: row.get(1)?,
+                password: row.get(2)?,
+            })
         })
-    ).unwrap();
+        .unwrap();
 
-    let mut to_return : Vec<User> = vec![];
+    let mut to_return: Vec<User> = vec![];
 
     for user in users {
         to_return.push(user.unwrap());
     }
 
     to_return
+}
+
+pub fn subscribe_to_a_course(student_uui: &str, course_uuid: &str) {
+    let conn = connect();
+
+    let uuid = Uuid::new_v4();
+
+    match conn.execute(
+        "INSERT INTO courses_students (guid, id_student, id_course) values (?1, ?2, ?3);",
+        &[&uuid.to_string().to_owned(), student_uui, course_uuid],
+    ) {
+        Ok(inserted) => println!("{} rows were inserted", inserted),
+        Err(err) => println!("insert failed: {}", err),
+    }
 }

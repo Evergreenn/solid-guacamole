@@ -3,17 +3,23 @@ use crate::claim::*;
 use crate::repositories::students_repository::*;
 use crate::security::password_manager::*;
 use actix_web::{error, post, web, Error, HttpResponse, Responder, Result};
+use actix_web_httpauth::extractors::bearer::BearerAuth;
 // use actix_web_httpauth::extractors::bearer::BearerAuth;
 use chrono::{Duration, Utc};
 use derive_more::Error;
-use serde::{Deserialize, Serialize};
 use email_address::*;
+use serde::{Deserialize, Serialize};
 use std::time::Instant;
 
 #[derive(Deserialize, Debug)]
 pub struct UserInput {
     pub email: String,
     pub password: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct UserRegistration {
+    pub course_uuid: String,
 }
 
 #[derive(Serialize)]
@@ -48,8 +54,7 @@ impl std::fmt::Display for CustomError {
 pub async fn create_token(info: web::Json<UserInput>) -> Result<HttpResponse, Error> {
     let user_info = info.into_inner();
 
-
-    if !EmailAddress::is_valid(&user_info.email){
+    if !EmailAddress::is_valid(&user_info.email) {
         return Ok(HttpResponse::BadRequest().json(CustomError {
             message: "You should provide a valid email address.",
             code: 045687,
@@ -89,15 +94,17 @@ pub async fn login(info: web::Json<UserInput>) -> Result<HttpResponse, Error> {
     let user_in_database = get_user(&user_info.email);
 
     let duration = start.elapsed();
-    println!("Time elapsed in &get_user(&user_info.username) is: {:?}", duration);
+    println!(
+        "Time elapsed in &get_user(&user_info.username) is: {:?}",
+        duration
+    );
     //     HttpResponse::
     if user_in_database.len() == 0 {
         Ok(HttpResponse::Unauthorized().json(CustomError {
             code: 16873154,
             message: "User doesn't exists",
         }))
-    }else {
-
+    } else {
         let user_from_db = &user_in_database[0];
 
         match verify_password(
@@ -105,19 +112,18 @@ pub async fn login(info: web::Json<UserInput>) -> Result<HttpResponse, Error> {
             user_from_db.password.to_string(),
         ) {
             true => {
-                let user_permissions = vec!["OP_GET_SECURED_INFO".to_string(), "ROLE_USER".to_string()];
+                let user_permissions =
+                    vec!["OP_GET_SECURED_INFO".to_string(), "ROLE_USER".to_string()];
                 let start = Instant::now();
 
-                let claims = Claims::new(
-                    &user_from_db.guid,
-                    &user_info.email,
-                    user_permissions,
-                );
+                let claims = Claims::new(&user_from_db.guid, &user_info.email, user_permissions);
                 let jwt = create_jwt(claims)?;
                 let duration = start.elapsed();
 
                 let expiration_time = (Utc::now()
-                + Duration::hours(dotenv!("TOKEN_DURATION_TIME_HOURS").parse::<i64>().unwrap()))
+                    + Duration::hours(
+                        dotenv!("TOKEN_DURATION_TIME_HOURS").parse::<i64>().unwrap(),
+                    ))
                 .timestamp();
                 println!("Time elapsed in create jwt is: {:?}", duration);
                 Ok(HttpResponse::Ok().json(LoginResult {
@@ -130,6 +136,18 @@ pub async fn login(info: web::Json<UserInput>) -> Result<HttpResponse, Error> {
                 message: "Wrong Password",
             })),
         }
-
     }
+}
+
+#[post("/subscribe")]
+pub async fn course_registration(
+    credentials: BearerAuth,
+    info: web::Json<UserRegistration>,
+) -> Result<HttpResponse, Error> {
+    let user_input = info.into_inner();
+    let token_decoded = decode_jwt(credentials.token()).unwrap();
+
+    subscribe_to_a_course(&token_decoded.user_id, &user_input.course_uuid);
+
+    Ok(HttpResponse::Created().json("success"))
 }
