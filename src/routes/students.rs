@@ -1,6 +1,6 @@
 use crate::claim::decode_jwt;
 use crate::claim::*;
-use crate::repositories::user_repository::*;
+use crate::repositories::students_repository::*;
 use crate::security::password_manager::*;
 use actix_web::{error, post, web, Error, HttpResponse, Responder, Result};
 // use actix_web_httpauth::extractors::bearer::BearerAuth;
@@ -47,6 +47,7 @@ impl std::fmt::Display for CustomError {
 #[post("/register")]
 pub async fn create_token(info: web::Json<UserInput>) -> Result<HttpResponse, Error> {
     let user_info = info.into_inner();
+
 
     if !EmailAddress::is_valid(&user_info.email){
         return Ok(HttpResponse::BadRequest().json(CustomError {

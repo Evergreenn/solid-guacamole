@@ -1,8 +1,7 @@
-use rusqlite::{Connection, Result};
-use serde::Serialize;
+use rusqlite::{Connection};
 use uuid::Uuid;
 
-const DB_PATH: &str = "./src/database/guacamole.db";
+const DB_PATH: &str = dotenv!("DATABASE_PATH");
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct User {

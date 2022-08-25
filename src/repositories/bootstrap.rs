@@ -14,7 +14,7 @@ pub fn init() {
              grade text,
              photo text,
              availablity text,
-             insert_date DATETIME DEFAULT CURRENT_TIMESTAMP
+            insert_date DATETIME DEFAULT CURRENT_TIMESTAMP
          );",
         [],
     )
@@ -24,7 +24,7 @@ pub fn init() {
         "CREATE TABLE IF NOT EXISTS courses (
              guid text primary key,
              prof text,
-             schedule_date DATETIME,
+             schedule_date INTEGER,
              theme text ,
              address text,
              level text,
