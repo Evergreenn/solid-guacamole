@@ -21,7 +21,7 @@ pub fn insert_new_user(email: &str, password: &str, _user_permission: Vec<String
 
     match conn.execute(
         "INSERT INTO students (guid, email, password) values (?1, ?2, ?3);",
-        &[&uuid.to_string().to_owned(), email, &password],
+        &[&uuid.to_string(), email, &password],
     ) {
         Ok(inserted) => println!("{} rows were inserted", inserted),
         Err(err) => println!("insert failed: {}", err),
@@ -86,7 +86,7 @@ pub fn subscribe_to_a_course(student_uui: &str, course_uuid: &str) {
 
     match conn.execute(
         "INSERT INTO courses_students (guid, id_student, id_course) values (?1, ?2, ?3);",
-        &[&uuid.to_string().to_owned(), student_uui, course_uuid],
+        &[&uuid.to_string(), student_uui, course_uuid],
     ) {
         Ok(inserted) => println!("{} rows were inserted", inserted),
         Err(err) => println!("insert failed: {}", err),

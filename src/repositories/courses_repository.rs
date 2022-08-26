@@ -20,6 +20,20 @@ pub struct Course {
     pub insert_date: NaiveDateTime,
 }
 
+
+#[derive(Debug, PartialEq, Eq, derive_more::Error, Serialize, Deserialize)]
+pub struct CourseWithJoin {
+    pub guid: String,
+    pub prof: String,
+    pub schedule: i64,
+    pub theme: String,
+    pub address: String,
+    pub level: String,
+    pub comments: String,
+    pub subscriber_count: i32,
+    pub insert_date: NaiveDateTime,
+}
+
 impl Display for Course {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
@@ -37,11 +51,28 @@ impl Display for Course {
     }
 }
 
+impl Display for CourseWithJoin {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "({}, {}, {}, {}, {}, {}, {}, {}, {})",
+            self.guid,
+            self.prof,
+            self.schedule,
+            self.theme,
+            self.address,
+            self.level,
+            self.comments,
+            self.insert_date,
+            self.subscriber_count,
+        )
+    }
+}
 fn connect() -> Connection {
     Connection::open(DB_PATH).unwrap()
 }
 
-pub fn get_courses(mut page: u16) -> Vec<Course> {
+pub fn get_courses(mut page: u16) -> Vec<CourseWithJoin> {
     let conn = connect();
 
     if page < 1u16 {
@@ -56,11 +87,11 @@ pub fn get_courses(mut page: u16) -> Vec<Course> {
         .expect("Time went backwards");
     let now_in_timestamp = since_the_epoch.as_secs();
 
-    let mut stmt = conn.prepare("SELECT * FROM courses WHERE schedule_date > ?1 LIMIT ?2 OFFSET ?3").unwrap();
+    let mut stmt = conn.prepare("SELECT c.*, COUNT(cs.guid) as nb_subscribers FROM courses c LEFT JOIN courses_students cs ON  c.guid = cs.id_course WHERE schedule_date > ?1 LIMIT ?2 OFFSET ?3").unwrap();
 
     let course_iter = stmt
         .query_map(params![now_in_timestamp, limit, offset], |row| {
-            Ok(Course {
+            Ok(CourseWithJoin {
                 guid: row.get(0).unwrap(),
                 prof: row.get(1).unwrap(),
                 schedule: row.get(2).unwrap(),
@@ -69,6 +100,7 @@ pub fn get_courses(mut page: u16) -> Vec<Course> {
                 level: row.get(5).unwrap(),
                 comments: row.get(6).unwrap(),
                 insert_date: row.get(7).unwrap(),
+                subscriber_count: row.get(8).unwrap(),
             })
         })
         .unwrap();
@@ -76,7 +108,7 @@ pub fn get_courses(mut page: u16) -> Vec<Course> {
     course_iter
         .into_iter()
         .map(|x| x.unwrap())
-        .collect::<Vec<Course>>()
+        .collect::<Vec<CourseWithJoin>>()
 }
 
 // pub fn get_user_subscribbed(course_id: &str) -> Vec<User> {
