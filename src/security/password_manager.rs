@@ -18,7 +18,7 @@ pub fn hash_password(clear_pass: &str) -> String {
 
 pub fn verify_password(clear_pass: String, hashed_pass: String) -> bool {
     let argon2 = Argon2::default();
-    let hashed_pass_str: &str = &*hashed_pass;
+    let hashed_pass_str: &str = &hashed_pass;
     argon2
         .verify_password(
             clear_pass.as_bytes(),

@@ -13,7 +13,7 @@ pub fn init() {
              email text not null,
              grade text,
              photo text,
-             availablity text,
+             availability text,
             insert_date DATETIME DEFAULT CURRENT_TIMESTAMP
          );",
         [],

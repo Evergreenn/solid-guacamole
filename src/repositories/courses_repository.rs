@@ -23,7 +23,6 @@ pub struct CourseWithJoin {
     pub insert_date: NaiveDateTime,
 }
 
-
 impl Display for CourseWithJoin {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
@@ -41,7 +40,6 @@ impl Display for CourseWithJoin {
         )
     }
 }
-
 
 pub fn get_users_subscribed(course_guid: &str) -> Vec<students_repository::FullUser> {
 
@@ -117,7 +115,7 @@ pub fn insert_course(course: courses::CourseFromClient) -> i64 {
 
     match conn.execute(
         "INSERT INTO courses (guid, prof, schedule_date, theme, address, level, comments) values (?1, ?2, ?3, ?4, ?5, ?6, ?7);",
-        params![&uuid.to_string().to_owned(), &course.prof, &course.schedule, &course.theme, &course.address, &course.level, &course.comments],
+        params![&uuid.to_string(), &course.prof, &course.schedule, &course.theme, &course.address, &course.level, &course.comments],
     ) {
         Ok(inserted) => println!("{} rows were inserted", inserted),
         Err(err) => println!("insert failed: {}", err),

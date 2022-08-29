@@ -33,34 +33,30 @@ pub fn insert_new_user(email: &str, password: &str, _user_permission: Vec<String
 
     match conn.execute(
         "INSERT INTO students (guid, email, password) values (?1, ?2, ?3);",
-        &[&uuid.to_string(), email, &password],
+        &[&uuid.to_string(), email, password],
     ) {
         Ok(inserted) => println!("{} rows were inserted", inserted),
         Err(err) => println!("insert failed: {}", err),
     }
 
-    let guid = conn
+    conn
         .query_row(
             "SELECT guid FROM students WHERE guid = ?1;",
             [uuid.to_string()],
             |row| row.get(0),
         )
-        .unwrap();
-
-    guid
+        .unwrap()
 }
 
 pub fn is_user_exists(email: &str) -> bool {
     let conn = connect();
 
-    match conn.query_row(
+
+    !matches!(conn.query_row(
         "SELECT email FROM students WHERE email = ?1;",
         &[email],
         |row| row.get::<usize, String>(0),
-    ) {
-        Err(_) => false,
-        _ => true,
-    }
+    ), Err(_))
 }
 
 // pub fn update_user() -> bool {}
@@ -96,14 +92,20 @@ pub fn is_user_alredy_subscribe(student_uui: &str, course_uuid: &str) -> bool {
 
     let conn = connect();
 
-    match conn.query_row(
+    // match conn.query_row(
+    //     "SELECT guid FROM courses_students WHERE id_student = ?1 AND course_uuid = ?2",
+    //     &[student_uui, course_uuid],
+    //     |row| row.get::<usize, String>(0),
+    // ){
+    //     Err(_) => false,
+    //     _ => true
+    //  }
+
+     !matches!(conn.query_row(
         "SELECT guid FROM courses_students WHERE id_student = ?1 AND course_uuid = ?2",
-        &[student_uui, course_uuid],
+         &[student_uui, course_uuid],
         |row| row.get::<usize, String>(0),
-    ){
-        Err(_) => false,
-        _ => true
-     }
+    ), Err(_))
 
 }
 

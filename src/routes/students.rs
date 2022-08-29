@@ -2,7 +2,7 @@ use crate::claim::decode_jwt;
 use crate::claim::*;
 use crate::repositories::students_repository::*;
 use crate::security::password_manager::*;
-use actix_web::{error, post, web, Error, HttpResponse, Responder, Result};
+use actix_web::{error, post, web, Error, HttpResponse, Result};
 use actix_web_httpauth::extractors::bearer::BearerAuth;
 // use actix_web_httpauth::extractors::bearer::BearerAuth;
 use chrono::{Duration, Utc};
@@ -57,14 +57,14 @@ pub async fn create_token(info: web::Json<UserInput>) -> Result<HttpResponse, Er
     if !EmailAddress::is_valid(&user_info.email) {
         return Ok(HttpResponse::BadRequest().json(CustomError {
             message: "You should provide a valid email address.",
-            code: 045687,
+            code: 45687,
         }));
     }
 
     if is_user_exists(&user_info.email) {
         return Ok(HttpResponse::BadRequest().json(CustomError {
             message: "User already exists.",
-            code: 089046,
+            code: 89046,
         }));
     }
 
@@ -72,7 +72,7 @@ pub async fn create_token(info: web::Json<UserInput>) -> Result<HttpResponse, Er
 
     let user_permissions = vec!["OP_GET_SECURED_INFO".to_string(), "ROLE_USER".to_string()];
 
-    let user_id = insert_new_user(&user_info.email, &pass_h, (&*user_permissions).to_vec());
+    let user_id = insert_new_user(&user_info.email, &pass_h, (*user_permissions).to_vec());
 
     let claims = Claims::new(&user_id, &user_info.email, user_permissions);
     let jwt = create_jwt(claims)?;
@@ -99,7 +99,7 @@ pub async fn login(info: web::Json<UserInput>) -> Result<HttpResponse, Error> {
         duration
     );
     //     HttpResponse::
-    if user_in_database.len() == 0 {
+    if user_in_database.is_empty() {
         Ok(HttpResponse::Unauthorized().json(CustomError {
             code: 16873154,
             message: "User doesn't exists",
@@ -150,7 +150,7 @@ pub async fn course_registration(
     if is_user_alredy_subscribe(&token_decoded.user_id, &user_input.course_uuid) {
         return Ok(HttpResponse::BadRequest().json(CustomError {
             message: "User already subscribed.",
-            code: 039513,
+            code: 39513,
         }));
     }
 
