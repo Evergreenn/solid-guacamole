@@ -58,7 +58,8 @@ async fn main() -> std::io::Result<()> {
                     .wrap(auth)
                     .service(crate::routes::courses::get_courses)
                     .service(crate::routes::courses::add_course)
-                    .service(crate::routes::students::course_registration),
+                    .service(crate::routes::courses::get_subscription)
+                    .service(crate::routes::students::course_registration)
             )
     })
     .bind(dotenv!("API_URL"))?

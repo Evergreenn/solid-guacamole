@@ -44,3 +44,16 @@ pub async fn add_course(
 
     Ok(HttpResponse::Created().json(courses))
 }
+
+#[get("/subscriptions/{courses_guid}")]
+pub async fn get_subscription (course_guid: web::Path<String>) -> Result<HttpResponse, Error> {
+    let cguid = course_guid.into_inner();
+    let start = Instant::now();
+
+    let subs = courses_repository::get_users_subscribed(&cguid);
+
+    let duration = start.elapsed();
+    dbg!("Time elapsed in get_courses is: {:?}", duration);
+
+    Ok(HttpResponse::Ok().json(subs))
+}

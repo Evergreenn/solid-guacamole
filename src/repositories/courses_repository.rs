@@ -6,20 +6,9 @@ use std::fmt::Display;
 use uuid::Uuid;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use super::students_repository;
+
 const DB_PATH: &str = dotenv!("DATABASE_PATH");
-
-#[derive(Debug, PartialEq, Eq, derive_more::Error, Serialize, Deserialize)]
-pub struct Course {
-    pub guid: String,
-    pub prof: String,
-    pub schedule: i64,
-    pub theme: String,
-    pub address: String,
-    pub level: String,
-    pub comments: String,
-    pub insert_date: NaiveDateTime,
-}
-
 
 #[derive(Debug, PartialEq, Eq, derive_more::Error, Serialize, Deserialize)]
 pub struct CourseWithJoin {
@@ -34,22 +23,6 @@ pub struct CourseWithJoin {
     pub insert_date: NaiveDateTime,
 }
 
-impl Display for Course {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "({}, {}, {}, {}, {}, {}, {}, {})",
-            self.guid,
-            self.prof,
-            self.schedule,
-            self.theme,
-            self.address,
-            self.level,
-            self.comments,
-            self.insert_date,
-        )
-    }
-}
 
 impl Display for CourseWithJoin {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -68,6 +41,31 @@ impl Display for CourseWithJoin {
         )
     }
 }
+
+
+pub fn get_users_subscribed(course_guid: &str) -> Vec<students_repository::FullUser> {
+
+        let conn = connect();
+        let mut stmt = conn.prepare("SELECT s.guid, s.name, s.email, s.grade, s.photo, s.availablity FROM students s INNER JOIN courses_students cs ON cs.id_student = s.guid WHERE cs.id_course = ?1 GROUP BY s.guid").unwrap();
+
+        let users_subs = stmt.query_map(params![course_guid], |row| {
+            Ok(students_repository::FullUser {
+                guid: row.get(0).unwrap(),
+                name: row.get(1).unwrap(),
+                email: row.get(2).unwrap(),
+                grade: row.get(3).unwrap(),
+                photo: row.get(4).unwrap(),
+                availability: row.get(5).unwrap()
+            })
+        }).unwrap();
+
+       users_subs 
+        .into_iter()
+        .map(|x| x.unwrap())
+        .collect::<Vec<students_repository::FullUser>>()
+    }
+
+
 fn connect() -> Connection {
     Connection::open(DB_PATH).unwrap()
 }
@@ -111,9 +109,6 @@ pub fn get_courses(mut page: u16) -> Vec<CourseWithJoin> {
         .collect::<Vec<CourseWithJoin>>()
 }
 
-// pub fn get_user_subscribbed(course_id: &str) -> Vec<User> {
-
-// }
 
 pub fn insert_course(course: courses::CourseFromClient) -> i64 {
     let conn = connect();

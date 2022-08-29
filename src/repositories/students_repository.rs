@@ -1,4 +1,5 @@
 use rusqlite::Connection;
+use serde::Serialize;
 use uuid::Uuid;
 
 const DB_PATH: &str = dotenv!("DATABASE_PATH");
@@ -8,6 +9,17 @@ pub struct User {
     pub guid: String,
     pub email: String,
     pub password: String,
+}
+
+#[derive(Debug, PartialEq, Eq, Serialize)]
+
+pub struct FullUser {
+    pub guid: String,
+    pub name: Option<String>,
+    pub email: String,
+    pub grade: Option<String>,
+    pub photo: Option<String>,
+    pub availability: Option<String>
 }
 
 pub fn connect() -> Connection {
@@ -78,6 +90,23 @@ pub fn get_user(username: &str) -> Vec<User> {
 
     to_return
 }
+
+
+pub fn is_user_alredy_subscribe(student_uui: &str, course_uuid: &str) -> bool {
+
+    let conn = connect();
+
+    match conn.query_row(
+        "SELECT guid FROM courses_students WHERE id_student = ?1 AND course_uuid = ?2",
+        &[student_uui, course_uuid],
+        |row| row.get::<usize, String>(0),
+    ){
+        Err(_) => false,
+        _ => true
+     }
+
+}
+
 
 pub fn subscribe_to_a_course(student_uui: &str, course_uuid: &str) {
     let conn = connect();
