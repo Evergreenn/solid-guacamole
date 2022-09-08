@@ -3,8 +3,8 @@ use chrono::NaiveDateTime;
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
-use uuid::Uuid;
 use std::time::{SystemTime, UNIX_EPOCH};
+use uuid::Uuid;
 
 use super::students_repository;
 
@@ -42,27 +42,27 @@ impl Display for CourseWithJoin {
 }
 
 pub fn get_users_subscribed(course_guid: &str) -> Vec<students_repository::FullUser> {
+    let conn = connect();
+    let mut stmt = conn.prepare("SELECT s.guid, s.name, s.email, s.grade, s.photo, s.availability FROM students s INNER JOIN courses_students cs ON cs.id_student = s.guid WHERE cs.id_course = ?1 GROUP BY s.guid").unwrap();
 
-        let conn = connect();
-        let mut stmt = conn.prepare("SELECT s.guid, s.name, s.email, s.grade, s.photo, s.availablity FROM students s INNER JOIN courses_students cs ON cs.id_student = s.guid WHERE cs.id_course = ?1 GROUP BY s.guid").unwrap();
-
-        let users_subs = stmt.query_map(params![course_guid], |row| {
+    let users_subs = stmt
+        .query_map(params![course_guid], |row| {
             Ok(students_repository::FullUser {
                 guid: row.get(0).unwrap(),
                 name: row.get(1).unwrap(),
                 email: row.get(2).unwrap(),
                 grade: row.get(3).unwrap(),
                 photo: row.get(4).unwrap(),
-                availability: row.get(5).unwrap()
+                availability: row.get(5).unwrap(),
             })
-        }).unwrap();
+        })
+        .unwrap();
 
-       users_subs 
+    users_subs
         .into_iter()
         .map(|x| x.unwrap())
         .collect::<Vec<students_repository::FullUser>>()
-    }
-
+}
 
 fn connect() -> Connection {
     Connection::open(DB_PATH).unwrap()
@@ -75,7 +75,7 @@ pub fn get_courses(mut page: u16) -> Vec<CourseWithJoin> {
         page = 1u16;
     }
 
-    let offset = (page -1) * 5u16;
+    let offset = (page - 1) * 5u16;
     let limit = 5u16;
     let start = SystemTime::now();
     let since_the_epoch = start
@@ -83,7 +83,7 @@ pub fn get_courses(mut page: u16) -> Vec<CourseWithJoin> {
         .expect("Time went backwards");
     let now_in_timestamp = since_the_epoch.as_secs();
 
-    let mut stmt = conn.prepare("SELECT c.*, COUNT(cs.guid) as nb_subscribers FROM courses c LEFT JOIN courses_students cs ON  c.guid = cs.id_course WHERE schedule_date > ?1 LIMIT ?2 OFFSET ?3").unwrap();
+    let mut stmt = conn.prepare("SELECT c.*, COUNT(cs.guid) as nb_subscribers FROM courses c LEFT JOIN courses_students cs ON  c.guid = cs.id_course WHERE schedule_date > ?1 GROUP BY c.guid LIMIT ?2 OFFSET ?3").unwrap();
 
     let course_iter = stmt
         .query_map(params![now_in_timestamp, limit, offset], |row| {
@@ -106,7 +106,6 @@ pub fn get_courses(mut page: u16) -> Vec<CourseWithJoin> {
         .map(|x| x.unwrap())
         .collect::<Vec<CourseWithJoin>>()
 }
-
 
 pub fn insert_course(course: courses::CourseFromClient) -> i64 {
     let conn = connect();

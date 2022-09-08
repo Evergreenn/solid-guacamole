@@ -52,7 +52,7 @@ pub fn is_user_exists(email: &str) -> bool {
     let conn = connect();
 
 
-    !matches!(conn.query_row(
+    matches!(conn.query_row(
         "SELECT email FROM students WHERE email = ?1;",
         &[email],
         |row| row.get::<usize, String>(0),
@@ -101,7 +101,7 @@ pub fn is_user_alredy_subscribe(student_uui: &str, course_uuid: &str) -> bool {
     //     _ => true
     //  }
 
-     !matches!(conn.query_row(
+     matches!(conn.query_row(
         "SELECT guid FROM courses_students WHERE id_student = ?1 AND course_uuid = ?2",
          &[student_uui, course_uuid],
         |row| row.get::<usize, String>(0),
