@@ -1,4 +1,4 @@
-use crate::routes::courses;
+use crate::routes::courses::{self, CourseUpdate};
 use chrono::NaiveDateTime;
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
@@ -121,4 +121,16 @@ pub fn insert_course(course: courses::CourseFromClient) -> i64 {
     }
 
     conn.last_insert_rowid()
+}
+
+pub fn update_course(course_uuid: &str, course_update: CourseUpdate) -> usize {
+    let conn = connect();
+
+    let mut stmt = conn.prepare(
+        "UPDATE courses SET prof = ?1, schedule_date = ?2, theme = ?3, address = ?4, level = ?5, comments = ?6 WHERE guid = ?7"
+    ).unwrap();
+
+    let CourseUpdate {prof, schedule_date, theme, address, level, comments} = course_update;
+    
+    stmt.execute(params!(&prof, &schedule_date, &theme, &address, &level, &comments, course_uuid)).unwrap()
 }

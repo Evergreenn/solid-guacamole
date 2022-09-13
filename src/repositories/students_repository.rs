@@ -1,6 +1,7 @@
 use rusqlite::Connection;
 use serde::Serialize;
 use uuid::Uuid;
+use crate::routes::students::StudentUpdate;
 
 const DB_PATH: &str = dotenv!("DATABASE_PATH");
 
@@ -122,4 +123,16 @@ pub fn subscribe_to_a_course(student_uui: &str, course_uuid: &str) {
         Ok(inserted) => println!("{} rows were inserted", inserted),
         Err(err) => println!("insert failed: {}", err),
     }
+}
+
+pub fn update_student(student_uuid: &str, student_update: StudentUpdate) -> usize {
+    let conn = connect();
+
+    let mut stmt = conn.prepare(
+        "UPDATE students SET name = ?1, password = ?2, grade = ?3, photo = ?4, availability = ?5 WHERE guid = ?6"
+    ).unwrap();
+
+    let StudentUpdate {name, password, grade, photo, availability} = student_update;
+    
+    stmt.execute([&name, &password, &grade, &photo, &availability, student_uuid]).unwrap()
 }

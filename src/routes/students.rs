@@ -1,4 +1,4 @@
-use crate::claim::decode_jwt;
+use crate::{claim::decode_jwt, repositories::students_repository};
 use crate::claim::*;
 use crate::repositories::students_repository::*;
 use crate::security::password_manager::*;
@@ -32,6 +32,16 @@ pub struct LoginResult {
 struct CustomError {
     message: &'static str,
     code: usize,
+}
+
+
+#[derive(Serialize, Deserialize)]
+pub struct StudentUpdate {
+    pub name: String,
+    pub password: String,
+    pub grade: String,
+    pub photo: String ,
+    pub availability: String,
 }
 
 impl error::ResponseError for CustomError {
@@ -157,4 +167,17 @@ pub async fn course_registration(
     subscribe_to_a_course(&token_decoded.user_id, &user_input.course_uuid);
 
     Ok(HttpResponse::Created().json("success"))
+}
+
+#[post("/update-student")]
+pub async fn update_student(
+    credentials: BearerAuth,
+    info: web::Json<StudentUpdate>,
+) -> Result<HttpResponse, Error> {
+    let user_input = info.into_inner();
+    let token_decoded = decode_jwt(credentials.token()).unwrap();
+
+    students_repository::update_student(&token_decoded.user_id, user_input);
+
+    Ok(HttpResponse::NoContent().json("success"))
 }

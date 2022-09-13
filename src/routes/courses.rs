@@ -1,13 +1,24 @@
+use crate::claim::decode_jwt;
 use crate::repositories::courses_repository;
 use actix_web::{get, post, web, Error, HttpResponse};
+use actix_web_httpauth::extractors::bearer::BearerAuth;
 use serde::{Deserialize, Serialize};
 use std::time::Instant;
 
 #[derive(Debug, Serialize, Deserialize)]
-
 pub struct CourseFromClient {
     pub prof: String,
     pub schedule: i64,
+    pub theme: String,
+    pub address: String,
+    pub level: String,
+    pub comments: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct CourseUpdate {
+    pub prof: String,
+    pub schedule_date: i64,
     pub theme: String,
     pub address: String,
     pub level: String,
@@ -31,9 +42,7 @@ pub async fn get_courses(pagination: web::Query<Query>) -> Result<HttpResponse, 
 }
 
 #[post("/add-courses")]
-pub async fn add_course(
-    info: web::Json<CourseFromClient>,
-) -> Result<HttpResponse, Error> {
+pub async fn add_course(info: web::Json<CourseFromClient>) -> Result<HttpResponse, Error> {
     let course = info.into_inner();
 
     let start = Instant::now();
@@ -46,7 +55,7 @@ pub async fn add_course(
 }
 
 #[get("/subscriptions/{courses_guid}")]
-pub async fn get_subscription (course_guid: web::Path<String>) -> Result<HttpResponse, Error> {
+pub async fn get_subscription(course_guid: web::Path<String>) -> Result<HttpResponse, Error> {
     let cguid = course_guid.into_inner();
     let start = Instant::now();
 
@@ -56,4 +65,17 @@ pub async fn get_subscription (course_guid: web::Path<String>) -> Result<HttpRes
     dbg!("Time elapsed in get_courses is: {:?}", duration);
 
     Ok(HttpResponse::Ok().json(subs))
+}
+
+#[post("/update-courses")]
+pub async fn update_course(
+    credentials: BearerAuth,
+    info: web::Json<CourseUpdate>,
+) -> Result<HttpResponse, Error> {
+    let course_input = info.into_inner();
+    let token_decoded = decode_jwt(credentials.token()).unwrap();
+
+    courses_repository::update_course(&token_decoded.user_id, course_input);
+
+    Ok(HttpResponse::NoContent().json("success"))
 }
