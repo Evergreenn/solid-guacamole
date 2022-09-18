@@ -2,9 +2,12 @@
 extern crate dotenv_codegen;
 extern crate derive_more;
 
+use std::path::PathBuf;
+
 use actix_cors::Cors;
+use actix_files::NamedFile;
 use actix_web::dev::ServiceRequest;
-use actix_web::{http, web, App, Error, HttpServer};
+use actix_web::{http, web, App, Error, HttpRequest, HttpServer, Result};
 use actix_web_grants::permissions::AttachPermissions;
 use actix_web_httpauth::extractors::bearer::BearerAuth;
 use actix_web_httpauth::middleware::HttpAuthentication;
@@ -29,6 +32,11 @@ async fn validator(
     }
 }
 
+async fn static_page(_req: HttpRequest) -> Result<NamedFile> {
+    let path: PathBuf = "./files/index.html".parse().unwrap();
+    Ok(NamedFile::open(path)?)
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv::from_filename(".env").unwrap();
@@ -51,6 +59,7 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
             .wrap(cors)
+            .route("/pwa", web::get().to(static_page))
             .service(create_token)
             .service(login)
             .service(
@@ -62,6 +71,7 @@ async fn main() -> std::io::Result<()> {
                     .service(crate::routes::courses::update_course)
                     .service(crate::routes::students::course_registration)
                     .service(crate::routes::students::update_student)
+                    .service(crate::routes::students::course_registration),
             )
     })
     .bind(dotenv!("API_URL"))?
