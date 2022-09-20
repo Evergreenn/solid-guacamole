@@ -67,15 +67,15 @@ pub async fn get_subscription(course_guid: web::Path<String>) -> Result<HttpResp
     Ok(HttpResponse::Ok().json(subs))
 }
 
-#[post("/update-courses")]
+#[post("/update-courses/{courses_guid}")]
 pub async fn update_course(
-    credentials: BearerAuth,
+    course_guid: web::Path<String>,
     info: web::Json<CourseUpdate>,
 ) -> Result<HttpResponse, Error> {
     let course_input = info.into_inner();
-    let token_decoded = decode_jwt(credentials.token()).unwrap();
+    let cguid = course_guid.into_inner();
 
-    courses_repository::update_course(&token_decoded.user_id, course_input);
+    courses_repository::update_course(&cguid, course_input);
 
     Ok(HttpResponse::NoContent().json("success"))
 }

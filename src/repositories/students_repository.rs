@@ -1,7 +1,7 @@
+use crate::routes::students::StudentUpdate;
 use rusqlite::Connection;
 use serde::Serialize;
 use uuid::Uuid;
-use crate::routes::students::StudentUpdate;
 
 const DB_PATH: &str = dotenv!("DATABASE_PATH");
 
@@ -20,7 +20,7 @@ pub struct FullUser {
     pub email: String,
     pub grade: Option<String>,
     pub photo: Option<String>,
-    pub availability: Option<String>
+    pub availability: Option<String>,
 }
 
 pub fn connect() -> Connection {
@@ -40,24 +40,25 @@ pub fn insert_new_user(email: &str, password: &str, _user_permission: Vec<String
         Err(err) => println!("insert failed: {}", err),
     }
 
-    conn
-        .query_row(
-            "SELECT guid FROM students WHERE guid = ?1;",
-            [uuid.to_string()],
-            |row| row.get(0),
-        )
-        .unwrap()
+    conn.query_row(
+        "SELECT guid FROM students WHERE guid = ?1;",
+        [uuid.to_string()],
+        |row| row.get(0),
+    )
+    .unwrap()
 }
 
 pub fn is_user_exists(email: &str) -> bool {
     let conn = connect();
 
-
-    matches!(conn.query_row(
-        "SELECT email FROM students WHERE email = ?1;",
-        &[email],
-        |row| row.get::<usize, String>(0),
-    ), Err(_))
+    !matches!(
+        conn.query_row(
+            "SELECT email FROM students WHERE email = ?1;",
+            &[email],
+            |row| row.get::<usize, String>(0),
+        ),
+        Err(_)
+    )
 }
 
 // pub fn update_user() -> bool {}
@@ -88,9 +89,7 @@ pub fn get_user(username: &str) -> Vec<User> {
     to_return
 }
 
-
 pub fn is_user_alredy_subscribe(student_uui: &str, course_uuid: &str) -> bool {
-
     let conn = connect();
 
     // match conn.query_row(
@@ -102,14 +101,15 @@ pub fn is_user_alredy_subscribe(student_uui: &str, course_uuid: &str) -> bool {
     //     _ => true
     //  }
 
-     matches!(conn.query_row(
-        "SELECT guid FROM courses_students WHERE id_student = ?1 AND course_uuid = ?2",
-         &[student_uui, course_uuid],
-        |row| row.get::<usize, String>(0),
-    ), Err(_))
-
+    matches!(
+        conn.query_row(
+            "SELECT guid FROM courses_students WHERE id_student = ?1 AND course_uuid = ?2",
+            &[student_uui, course_uuid],
+            |row| row.get::<usize, String>(0),
+        ),
+        Err(_)
+    )
 }
-
 
 pub fn subscribe_to_a_course(student_uui: &str, course_uuid: &str) {
     let conn = connect();
@@ -132,7 +132,21 @@ pub fn update_student(student_uuid: &str, student_update: StudentUpdate) -> usiz
         "UPDATE students SET name = ?1, password = ?2, grade = ?3, photo = ?4, availability = ?5 WHERE guid = ?6"
     ).unwrap();
 
-    let StudentUpdate {name, password, grade, photo, availability} = student_update;
-    
-    stmt.execute([&name, &password, &grade, &photo, &availability, student_uuid]).unwrap()
+    let StudentUpdate {
+        name,
+        password,
+        grade,
+        photo,
+        availability,
+    } = student_update;
+
+    stmt.execute([
+        &name,
+        &password,
+        &grade,
+        &photo,
+        &availability,
+        student_uuid,
+    ])
+    .unwrap()
 }
