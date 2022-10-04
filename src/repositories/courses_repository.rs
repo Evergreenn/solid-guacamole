@@ -83,7 +83,7 @@ pub fn get_courses(mut page: u16) -> Vec<CourseWithJoin> {
         .expect("Time went backwards");
     let now_in_timestamp = since_the_epoch.as_secs();
 
-    let mut stmt = conn.prepare("SELECT c.*, COUNT(cs.guid) as nb_subscribers FROM courses c LEFT JOIN courses_students cs ON  c.guid = cs.id_course WHERE schedule_date > ?1 GROUP BY c.guid LIMIT ?2 OFFSET ?3").unwrap();
+    let mut stmt = conn.prepare("SELECT c.*, COUNT(cs.guid) as nb_subscribers FROM courses c LEFT JOIN courses_students cs ON  c.guid = cs.id_course WHERE schedule_date > ?1 GROUP BY c.guid ORDER BY c.schedule_date ASC LIMIT ?2 OFFSET ?3").unwrap();
 
     let course_iter = stmt
         .query_map(params![now_in_timestamp, limit, offset], |row| {
@@ -130,7 +130,23 @@ pub fn update_course(course_uuid: &str, course_update: CourseUpdate) -> usize {
         "UPDATE courses SET prof = ?1, schedule_date = ?2, theme = ?3, address = ?4, level = ?5, comments = ?6 WHERE guid = ?7"
     ).unwrap();
 
-    let CourseUpdate {prof, schedule_date, theme, address, level, comments} = course_update;
-    
-    stmt.execute(params!(&prof, &schedule_date, &theme, &address, &level, &comments, course_uuid)).unwrap()
+    let CourseUpdate {
+        prof,
+        schedule_date,
+        theme,
+        address,
+        level,
+        comments,
+    } = course_update;
+
+    stmt.execute(params!(
+        &prof,
+        &schedule_date,
+        &theme,
+        &address,
+        &level,
+        &comments,
+        course_uuid
+    ))
+    .unwrap()
 }
