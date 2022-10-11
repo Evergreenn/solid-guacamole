@@ -14,6 +14,7 @@ pub fn init() {
              grade text,
              photo text,
              availability text,
+             user_permissions text,
             insert_date DATETIME DEFAULT CURRENT_TIMESTAMP
          );",
         [],
@@ -44,4 +45,29 @@ pub fn init() {
         [],
     )
     .unwrap();
+
+    conn.execute(
+            "INSERT OR IGNORE INTO students (
+    guid,
+    name,
+    password,
+    email,
+    grade,
+    photo,
+    availability,
+    user_permissions
+    ) VALUES(
+    '67e55044-10b1-426f-9247-bb680e5fe0c8',
+    'Guillaume Girard',
+    '$argon2id$v=19$m=4096,t=3,p=1$R4ofGHQ6RJg8DRpJRmOe8g$M79P1jYZJVSfAc2Wp6KzDe1Nr2ps1HNm5OeRBc+4PQ4',
+    'guillaumegirardpro@gmail.com',
+    'Guro ISA',
+    '',
+    '',
+    'OP_GET_SECURED_INFO,ROLE_PROF'
+    )
+    ",
+            [],
+        )
+        .unwrap();
 }

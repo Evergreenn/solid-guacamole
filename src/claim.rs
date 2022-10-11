@@ -12,17 +12,26 @@ const SECRET: &str = "SECRET";
 pub(crate) struct Claims {
     pub user_id: String,
     pub username: String,
+    pub name: String,
     pub permissions: Vec<String>,
     exp: i64,
 }
 
 impl Claims {
-    pub fn new(user_id_ref: &str, username_ref: &str, permissions: Vec<String>) -> Self {
+    pub fn new(
+        user_id_ref: &str,
+        name_ref: &str,
+        username_ref: &str,
+        permissions_ref: &Vec<String>,
+    ) -> Self {
         let user_id = user_id_ref.to_string();
+        let name = name_ref.to_string();
         let username: String = username_ref.to_string();
+        let permissions = permissions_ref.clone();
         Self {
             user_id,
             username,
+            name,
             permissions,
             exp: (Utc::now()
                 + Duration::hours(dotenv!("TOKEN_DURATION_TIME_HOURS").parse::<i64>().unwrap()))

@@ -1,8 +1,8 @@
-use crate::{claim::decode_jwt, repositories::students_repository};
 use crate::claim::*;
 use crate::repositories::students_repository::*;
 use crate::security::password_manager::*;
-use actix_web::{error, post, web, Error, HttpResponse, Result};
+use crate::{claim::decode_jwt, repositories::students_repository};
+use actix_web::{error, get, post, web, Error, HttpResponse, Result};
 use actix_web_httpauth::extractors::bearer::BearerAuth;
 // use actix_web_httpauth::extractors::bearer::BearerAuth;
 use chrono::{Duration, Utc};
@@ -13,6 +13,13 @@ use std::time::Instant;
 
 #[derive(Deserialize, Debug)]
 pub struct UserInput {
+    pub email: String,
+    pub name: String,
+    pub password: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct UserInputForLogin {
     pub email: String,
     pub password: String,
 }
@@ -34,13 +41,11 @@ struct CustomError {
     code: usize,
 }
 
-
 #[derive(Serialize, Deserialize)]
 pub struct StudentUpdate {
     pub name: String,
-    pub password: String,
     pub grade: String,
-    pub photo: String ,
+    pub photo: String,
     pub availability: String,
 }
 
@@ -74,7 +79,7 @@ pub async fn create_token(info: web::Json<UserInput>) -> Result<HttpResponse, Er
     if is_user_exists(&user_info.email) {
         return Ok(HttpResponse::BadRequest().json(CustomError {
             message: "User already exists.",
-            code: 89046,
+            code: 89045,
         }));
     }
 
@@ -82,9 +87,19 @@ pub async fn create_token(info: web::Json<UserInput>) -> Result<HttpResponse, Er
 
     let user_permissions = vec!["OP_GET_SECURED_INFO".to_string(), "ROLE_USER".to_string()];
 
-    let user_id = insert_new_user(&user_info.email, &pass_h, (*user_permissions).to_vec());
+    let user_id = insert_new_user(
+        &user_info.email,
+        &user_info.name,
+        &pass_h,
+        (*user_permissions).to_vec(),
+    );
 
-    let claims = Claims::new(&user_id, &user_info.email, user_permissions);
+    let claims = Claims::new(
+        &user_id,
+        &user_info.name,
+        &user_info.email,
+        &user_permissions,
+    );
     let jwt = create_jwt(claims)?;
     let expiration_time = (Utc::now()
         + Duration::hours(dotenv!("TOKEN_DURATION_TIME_HOURS").parse::<i64>().unwrap()))
@@ -97,7 +112,7 @@ pub async fn create_token(info: web::Json<UserInput>) -> Result<HttpResponse, Er
 }
 
 #[post("/login")]
-pub async fn login(info: web::Json<UserInput>) -> Result<HttpResponse, Error> {
+pub async fn login(info: web::Json<UserInputForLogin>) -> Result<HttpResponse, Error> {
     let user_info = info.into_inner();
 
     let start = Instant::now();
@@ -122,11 +137,14 @@ pub async fn login(info: web::Json<UserInput>) -> Result<HttpResponse, Error> {
             user_from_db.password.to_string(),
         ) {
             true => {
-                let user_permissions =
-                    vec!["OP_GET_SECURED_INFO".to_string(), "ROLE_USER".to_string()];
                 let start = Instant::now();
 
-                let claims = Claims::new(&user_from_db.guid, &user_info.email, user_permissions);
+                let claims = Claims::new(
+                    &user_from_db.guid,
+                    &user_from_db.name,
+                    &user_info.email,
+                    &user_from_db.user_permissions,
+                );
                 let jwt = create_jwt(claims)?;
                 let duration = start.elapsed();
 
@@ -180,4 +198,13 @@ pub async fn update_student(
     students_repository::update_student(&token_decoded.user_id, user_input);
 
     Ok(HttpResponse::NoContent().json("success"))
+}
+
+#[get("/me")]
+pub async fn me(credentials: BearerAuth) -> Result<HttpResponse, Error> {
+    let token_decoded = decode_jwt(credentials.token()).unwrap();
+
+    let me = students_repository::get_me(&token_decoded.user_id);
+
+    Ok(HttpResponse::Ok().json(me))
 }
