@@ -144,6 +144,18 @@ pub fn is_user_alredy_subscribe(student_uui: &str, course_uuid: &str) -> bool {
     }
 }
 
+pub fn unsubscribe_to_a_course(student_uui: &str, course_uuid: &str) {
+    let conn = connect();
+
+    match conn.execute(
+        "DELETE FROM courses_students WHERE id_student= ?1 AND id_course= ?2;",
+        &[student_uui, course_uuid],
+    ) {
+        Ok(deleted) => println!("{} rows were delete", deleted),
+        Err(err) => println!("delete failed: {}", err),
+    }
+}
+
 pub fn subscribe_to_a_course(student_uui: &str, course_uuid: &str) {
     let conn = connect();
 

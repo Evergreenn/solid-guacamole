@@ -60,6 +60,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(cors)
             .route("/pwa", web::get().to(static_page))
+            .route("health-check", web::get().to(|| async { "I am alive!" }))
             .service(create_token)
             .service(login)
             .service(
@@ -71,6 +72,7 @@ async fn main() -> std::io::Result<()> {
                     .service(crate::routes::courses::update_course)
                     .service(crate::routes::students::course_registration)
                     .service(crate::routes::students::update_student)
+                    .service(crate::routes::students::course_deregistration)
                     .service(crate::routes::students::course_registration)
                     .service(crate::routes::students::me),
             )

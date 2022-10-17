@@ -187,6 +187,26 @@ pub async fn course_registration(
     Ok(HttpResponse::Created().json("success"))
 }
 
+#[post("/unsubscribe")]
+pub async fn course_deregistration(
+    credentials: BearerAuth,
+    info: web::Json<UserRegistration>,
+) -> Result<HttpResponse, Error> {
+    let user_input = info.into_inner();
+    let token_decoded = decode_jwt(credentials.token()).unwrap();
+
+    if !is_user_alredy_subscribe(&token_decoded.user_id, &user_input.course_uuid) {
+        return Ok(HttpResponse::BadRequest().json(CustomError {
+            message: "User is not subscribed.",
+            code: 39513,
+        }));
+    }
+
+    unsubscribe_to_a_course(&token_decoded.user_id, &user_input.course_uuid);
+
+    Ok(HttpResponse::Ok().json("success"))
+}
+
 #[post("/update-student")]
 pub async fn update_student(
     credentials: BearerAuth,
